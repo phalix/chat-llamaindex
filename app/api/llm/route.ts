@@ -4,6 +4,8 @@ import {
   ContextChatEngine,
   IndexDict,
   OpenAI,
+  HuggingFaceEmbedding,
+  Ollama,
   ServiceContext,
   SimpleChatEngine,
   SimpleChatHistory,
@@ -13,6 +15,9 @@ import {
   serviceContextFromDefaults,
   Response,
 } from "llamaindex";
+
+import { env } from "@xenova/transformers";
+
 import { NextRequest, NextResponse } from "next/server";
 import { LLMConfig, MessageContent } from "@/app/client/platforms/llm";
 import { getDataSource } from "./datasource";
@@ -151,15 +156,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const llm = new OpenAI({
+    /*const llmoai = new OpenAI({
       model: config.model,
       temperature: config.temperature,
       topP: config.topP,
       maxTokens: config.maxTokens,
+    });*/
+
+    const llm = new Ollama({
+      model: "gemma:2b",
+      requestTimeout: 9600.0,
+      baseURL: "http://localhost:11434",
+    });
+
+    const embedModel = new HuggingFaceEmbedding({
+      /*modelType:"BAAI/bge-small-en-v1.5",*/
     });
 
     const serviceContext = serviceContextFromDefaults({
       llm,
+      embedModel: embedModel,
       chunkSize: DATASOURCES_CHUNK_SIZE,
       chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
     });

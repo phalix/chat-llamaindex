@@ -10,6 +10,8 @@ import {
   SimpleNodeParser,
   VectorStoreIndex,
   serviceContextFromDefaults,
+  HuggingFaceEmbedding,
+  Ollama,
 } from "llamaindex";
 
 export default async function splitAndEmbed(
@@ -21,12 +23,29 @@ export default async function splitAndEmbed(
       chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
     }),
   });
-  const nodes = nodeParser.getNodesFromDocuments([
-    new Document({ text: document }),
-  ]);
-  const index = await VectorStoreIndex.fromDocuments(nodes, {
-    serviceContext: serviceContextFromDefaults(),
+  const documents = [new Document({ text: document })];
+  const nodes = nodeParser.getNodesFromDocuments(documents);
+
+  const embedModel = new HuggingFaceEmbedding({
+    /*modelType:"BAAI/bge-small-en-v1.5"*/
   });
+  embedModel.getExtractor();
+  const llm = new Ollama({
+    model: "gemma:2b",
+    requestTimeout: 4800.0,
+    baseURL: "http://localhost:11434",
+  });
+
+  const serviceContext = serviceContextFromDefaults({
+    embedModel: embedModel,
+    llm: llm,
+  });
+
+  console.log(nodes);
+  const index = await VectorStoreIndex.fromDocuments(documents, {
+    serviceContext: serviceContext,
+  });
+
   const nodesWithEmbeddings = await index.getNodeEmbeddingResults(nodes);
 
   return nodesWithEmbeddings.map((nodeWithEmbedding) => ({
