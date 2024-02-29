@@ -13,19 +13,21 @@ export const DEMO_BOTS: DemoBot[] = [
   {
     id: "1",
     avatar: "1f916",
-    name: "GPT-4 Vision Preview",
+    name: "Gemma",
     botHello: "Hello! How can I assist you today?",
     context: [],
     modelConfig: {
-      model: "gpt-4-vision-preview",
-      temperature: 0.3,
+      model: "gemma:2b",
+      temperature: 1,
       maxTokens: 4096,
       sendMemory: false,
+      topP: 0.4,
     },
-    readOnly: true,
+    readOnly: false,
     hideContext: false,
+    datasource: "test",
   },
-  {
+  /*{
     id: "2",
     avatar: "1f916",
     name: "My Documents",
@@ -84,7 +86,7 @@ export const DEMO_BOTS: DemoBot[] = [
   },
   {
     id: "5",
-    avatar: "1f4da",
+    avatar: "1f916",
     name: "German Basic Law Expert",
     botHello: "Hello! How can I assist you today?",
     context: [
@@ -102,7 +104,7 @@ export const DEMO_BOTS: DemoBot[] = [
     readOnly: true,
     datasource: "basic_law_germany",
     hideContext: false,
-  },
+  },*/
 ];
 
 export const createDemoBots = (): Record<string, Bot> => {
@@ -121,7 +123,7 @@ export const createEmptyBot = (): Bot => ({
   name: Locale.Store.DefaultBotName,
   context: [],
   modelConfig: {
-    model: "gpt-4-1106-preview" as ModelType,
+    model: "gemma:2b" as ModelType,
     temperature: 0.5,
     maxTokens: 4096,
     sendMemory: true,

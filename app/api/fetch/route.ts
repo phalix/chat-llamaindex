@@ -3,7 +3,8 @@ import {
   getPDFContentFromBuffer,
 } from "@/app/api/fetch/content";
 import { NextResponse, NextRequest } from "next/server";
-import splitAndEmbed from "./embeddings";
+//import splitAndEmbed from "./embeddings";
+import { splitAndEmbed, splitCSVAndEmbed } from "./embeddings";
 import { URLDetailContent } from "@/app/client/fetch/url";
 
 export async function GET(request: NextRequest) {
@@ -33,8 +34,9 @@ export async function GET(request: NextRequest) {
 async function handleText(
   fileName: string,
   text: string,
+  datasource?: string,
 ): Promise<URLDetailContent> {
-  const embeddings = await splitAndEmbed(text);
+  const embeddings = await splitAndEmbed(text, datasource);
   return {
     content: text,
     embeddings: embeddings,
@@ -47,10 +49,11 @@ async function handleText(
 async function handlePDF(
   fileName: string,
   pdf: string,
+  datasource?: string,
 ): Promise<URLDetailContent> {
   const pdfBuffer = Buffer.from(pdf, "base64");
   const pdfData = await getPDFContentFromBuffer(pdfBuffer);
-  const embeddings = await splitAndEmbed(pdfData.content);
+  const embeddings = await splitAndEmbed(pdfData.content, datasource);
   return {
     content: pdfData.content,
     embeddings: embeddings,
@@ -60,15 +63,33 @@ async function handlePDF(
   };
 }
 
+async function handleCSV(
+  fileName: string,
+  csv: string,
+  datasource?: string,
+): Promise<URLDetailContent> {
+  const embeddings = await splitCSVAndEmbed(csv, datasource);
+  return {
+    content: csv,
+    embeddings: embeddings,
+    url: fileName,
+    size: csv.length,
+    type: "text/csv",
+  };
+}
+
 type Input = {
+  datasource?: string;
   fileName: string;
   pdf?: string;
   text?: string;
+  csv?: string;
 };
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileName, pdf, text }: Input = await request.json();
+    const { datasource, fileName, pdf, text, csv }: Input =
+      await request.json();
     if (!fileName && (!pdf || !text)) {
       return NextResponse.json(
         {
@@ -78,9 +99,17 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const json = await (pdf
-      ? handlePDF(fileName, pdf)
-      : handleText(fileName, text!));
+    let json;
+    if (pdf) {
+      json = await handlePDF(fileName, pdf, datasource);
+    }
+    if (text) {
+      json = await handleText(fileName, text!, datasource);
+    }
+    if (csv) {
+      json = await handleCSV(fileName, csv, datasource);
+    }
+
     return NextResponse.json(json);
   } catch (error) {
     console.error("[Fetch]", error);

@@ -7,8 +7,8 @@ export const MESSAGE_ROLES = [
   "system",
   "user",
   "assistant",
-  "URL",
-  "memory",
+  /*"URL",
+  "memory", TODO: not supported by ollama gemma*/
 ] as const;
 export type MessageRole = (typeof MESSAGE_ROLES)[number];
 
@@ -30,13 +30,7 @@ export interface ResponseMessage {
   content: string;
 }
 
-export const ALL_MODELS = [
-  "gpt-4",
-  "gpt-4-1106-preview",
-  "gpt-4-vision-preview",
-  "gpt-3.5-turbo",
-  "gpt-3.5-turbo-16k",
-] as const;
+export const ALL_MODELS = ["gemma:2b", "gemma:7b"] as const;
 
 export type ModelType = (typeof ALL_MODELS)[number];
 

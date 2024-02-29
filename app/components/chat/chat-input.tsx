@@ -138,12 +138,26 @@ export default function ChatInput(props: ChatInputProps) {
   const doSubmitFile = async (fileInput: FileWrap) => {
     try {
       await manageTemporaryBlobUrl(fileInput.file, async () => {
-        const fileDetail = await getDetailContentFromFile(fileInput);
+        const fileDetail = await getDetailContentFromFile(
+          fileInput,
+          bot.datasource,
+        );
         if (isImageFileType(fileInput.file.type)) {
           setImageFile(fileDetail);
         } else {
           callLLM({ fileDetail });
         }
+      });
+    } catch (error) {
+      showError(Locale.Upload.Failed((error as Error).message));
+    }
+  };
+
+  const justSubmitFile = async (fileInput: FileWrap) => {
+    try {
+      await manageTemporaryBlobUrl(fileInput.file, async () => {
+        await getDetailContentFromFile(fileInput, bot.datasource);
+        console.log("File successfully saved.");
       });
     } catch (error) {
       showError(Locale.Upload.Failed((error as Error).message));
@@ -229,6 +243,19 @@ export default function ChatInput(props: ChatInputProps) {
       <div className="my-2 flex items-center gap-2.5 absolute right-[15px]">
         <FileUploader
           config={{
+            justupload: true,
+            inputId: "just-a-document-uploader",
+            allowedExtensions: ALLOWED_DOCUMENT_EXTENSIONS,
+            checkExtension,
+            fileSizeLimit: DOCUMENT_FILE_SIZE_LIMIT,
+            disabled: isRunning || isUploadingImage,
+          }}
+          onUpload={justSubmitFile}
+          onError={showError}
+        />
+        <FileUploader
+          config={{
+            justupload: false,
             inputId: "document-uploader",
             allowedExtensions: ALLOWED_DOCUMENT_EXTENSIONS,
             checkExtension,

@@ -17,7 +17,7 @@ export const CHAT_PAGE_SIZE = 15;
 export const MAX_RENDER_MSG_COUNT = 45;
 
 export const ALLOWED_IMAGE_EXTENSIONS = ["jpeg", "jpg", "png", "gif", "webp"];
-export const ALLOWED_TEXT_EXTENSIONS = ["pdf", "txt"];
+export const ALLOWED_TEXT_EXTENSIONS = ["pdf", "txt", "csv"];
 export const ALLOWED_DOCUMENT_EXTENSIONS = [
   ...ALLOWED_TEXT_EXTENSIONS,
   ...ALLOWED_IMAGE_EXTENSIONS,
@@ -28,6 +28,7 @@ export const DOCUMENT_TYPES = [
   "text/html",
   "application/pdf",
   "text/plain",
+  "text/csv",
 ] as const;
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];

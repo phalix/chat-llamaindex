@@ -5,6 +5,7 @@ import {
   IndexDict,
   OpenAI,
   HuggingFaceEmbedding,
+  QdrantVectorStore,
   Ollama,
   ServiceContext,
   SimpleChatEngine,
@@ -14,13 +15,12 @@ import {
   VectorStoreIndex,
   serviceContextFromDefaults,
   Response,
+  Document,
 } from "llamaindex";
-
-import { env } from "@xenova/transformers";
 
 import { NextRequest, NextResponse } from "next/server";
 import { LLMConfig, MessageContent } from "@/app/client/platforms/llm";
-import { getDataSource } from "./datasource";
+
 import {
   DATASOURCES_CHUNK_OVERLAP,
   DATASOURCES_CHUNK_SIZE,
@@ -30,19 +30,11 @@ import Locale from "@/app/locales";
 
 async function createChatEngine(
   serviceContext: ServiceContext,
-  datasource?: string,
-  embeddings?: Embedding[],
+  index?: VectorStoreIndex,
 ) {
-  if (datasource || embeddings) {
-    let index;
-    if (embeddings) {
-      // TODO: merge indexes, currently we prefer own embeddings
-      index = await createIndex(serviceContext, embeddings);
-    } else if (datasource) {
-      index = await getDataSource(serviceContext, datasource);
-    }
+  if (index) {
     const retriever = index!.asRetriever();
-    retriever.similarityTopK = 5;
+    retriever.similarityTopK = 20;
 
     return new ContextChatEngine({
       chatModel: serviceContext.llm,
@@ -164,9 +156,11 @@ export async function POST(request: NextRequest) {
     });*/
 
     const llm = new Ollama({
-      model: "gemma:2b",
+      model: config.model,
       requestTimeout: 9600.0,
       baseURL: "http://localhost:11434",
+      temperature: config.temperature,
+      topP: config.topP,
     });
 
     const embedModel = new HuggingFaceEmbedding({
@@ -180,11 +174,40 @@ export async function POST(request: NextRequest) {
       chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
     });
 
-    const chatEngine = await createChatEngine(
-      serviceContext,
-      datasource,
-      embeddings,
-    );
+    let chatEngine;
+    if (embeddings) {
+      const index = await createIndex(serviceContext, embeddings);
+      chatEngine = await createChatEngine(serviceContext, index);
+    } else {
+      const vectorStore = new QdrantVectorStore({
+        url: "http://localhost:6333",
+        collectionName: datasource,
+      });
+      let exists = false;
+      if (datasource) {
+        exists = await vectorStore.collectionExists(datasource);
+      }
+      if (datasource && exists) {
+        if (!exists) {
+          await vectorStore.createCollection(
+            datasource,
+            embedModel.embedBatchSize,
+          );
+        }
+        const index = await VectorStoreIndex.fromVectorStore(
+          vectorStore,
+          serviceContext,
+        );
+
+        chatEngine = await createChatEngine(serviceContext, index);
+      } else {
+        chatEngine = await createChatEngine(serviceContext);
+      }
+    }
+
+    //TODO: currently not implemented in any other thing than open ai!
+    config.sendMemory = false;
+
     const chatHistory = config.sendMemory
       ? new SummaryChatHistory({ llm, messages })
       : new SimpleChatHistory({ messages });

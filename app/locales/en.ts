@@ -17,8 +17,7 @@ const en = {
     Send: "Send",
     IsContext: "Contextual Prompt",
     LoadingURL: "Loading content...",
-    LLMError:
-      "There was an error calling the OpenAI API. Please try again later.",
+    LLMError: "There was an error calling the LLM. Please try again later.",
   },
   Upload: {
     Invalid: (acceptTypes: string) =>
@@ -131,6 +130,10 @@ const en = {
       BotHello: {
         Title: "Welcome Message",
         SubTitle: "Welcome message sent when starting a new chat",
+      },
+      Datasource: {
+        Title: "Datasource",
+        SubTitle: "Data to be used by Bot.",
       },
       Title: "Bot Settings",
     },

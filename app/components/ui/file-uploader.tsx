@@ -3,11 +3,11 @@ import { cn } from "@/app/lib/utils";
 import { FileWrap } from "@/app/utils/file";
 import { ChangeEvent, useState } from "react";
 import Locale from "../../locales";
-import { Paperclip, Loader2 } from "lucide-react";
-
+import { Paperclip, Loader2, ArrowBigUp } from "lucide-react";
 export interface FileUploaderProps {
   config?: {
     inputId?: string;
+    justupload?: boolean;
     fileSizeLimit?: number;
     allowedExtensions?: string[];
     checkExtension?: (extension: string) => string | null;
@@ -27,6 +27,7 @@ export default function FileUploader({
 }: FileUploaderProps) {
   const [uploading, setUploading] = useState(false);
 
+  const justUpload = config?.justupload || false;
   const inputId = config?.inputId || DEFAULT_INPUT_ID;
   const fileSizeLimit = config?.fileSizeLimit || DEFAULT_FILE_SIZE_LIMIT;
   const allowedExtensions = config?.allowedExtensions;
@@ -92,7 +93,13 @@ export default function FileUploader({
         {uploading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <Paperclip className="-rotate-45 w-4 h-4" />
+          <>
+            {justUpload ? (
+              <ArrowBigUp className="w-4 h-4" />
+            ) : (
+              <Paperclip className="w-4 h-4" />
+            )}
+          </>
         )}
       </label>
     </div>

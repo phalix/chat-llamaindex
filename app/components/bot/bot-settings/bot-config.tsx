@@ -73,6 +73,20 @@ export default function BotConfig() {
               }}
             />
           </ConfigItem>
+          <ConfigItem
+            title={Locale.Bot.Config.Datasource.Title}
+            subTitle={Locale.Bot.Config.Datasource.SubTitle}
+          >
+            <Input
+              type="text"
+              value={bot.datasource || ""}
+              onChange={(e) => {
+                updateBot((bot) => {
+                  bot.datasource = e.currentTarget.value;
+                });
+              }}
+            />
+          </ConfigItem>
         </CardContent>
       </Card>
     </>
