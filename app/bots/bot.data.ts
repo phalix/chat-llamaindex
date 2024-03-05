@@ -4,9 +4,9 @@ import Locale from "../locales";
 import { ModelType } from "@/app/client/platforms/llm";
 import { createEmptySession } from "../store";
 
-const TEMPLATE = (PERSONA: string) =>
+/*const TEMPLATE = (PERSONA: string) =>
   `I want you to act as a ${PERSONA}. I will provide you with the context needed to solve my problem. Use intelligent, simple, and understandable language. Be concise. It is helpful to explain your thoughts step by step and with bullet points.`;
-
+*/
 type DemoBot = Omit<Bot, "session">;
 
 export const DEMO_BOTS: DemoBot[] = [
@@ -17,7 +17,7 @@ export const DEMO_BOTS: DemoBot[] = [
     botHello: "Hello! How can I assist you today?",
     context: [],
     modelConfig: {
-      model: "gemma:2b",
+      model: "gemma:7b",
       temperature: 1,
       maxTokens: 4096,
       sendMemory: false,

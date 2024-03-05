@@ -2,8 +2,7 @@ import {
   ChatHistory,
   ChatMessage,
   ContextChatEngine,
-  IndexDict,
-  OpenAI,
+  Document,
   HuggingFaceEmbedding,
   QdrantVectorStore,
   Ollama,
@@ -11,12 +10,12 @@ import {
   SimpleChatEngine,
   SimpleChatHistory,
   SummaryChatHistory,
-  TextNode,
   VectorStoreIndex,
   serviceContextFromDefaults,
   Response,
-  Document,
 } from "llamaindex";
+
+import { ALL_MODELS } from "../../client/platforms/llm";
 
 import { NextRequest, NextResponse } from "next/server";
 import { LLMConfig, MessageContent } from "@/app/client/platforms/llm";
@@ -34,7 +33,7 @@ async function createChatEngine(
 ) {
   if (index) {
     const retriever = index!.asRetriever();
-    retriever.similarityTopK = 20;
+    retriever.similarityTopK = 5;
 
     return new ContextChatEngine({
       chatModel: serviceContext.llm,
@@ -51,25 +50,14 @@ async function createIndex(
   serviceContext: ServiceContext,
   embeddings: Embedding[],
 ) {
-  const embeddingResults = embeddings.map((config) => {
-    return new TextNode({ text: config.text, embedding: config.embedding });
+  const documents = embeddings.map((config) => {
+    return new Document({ text: config.text });
   });
-  const indexDict = new IndexDict();
-  for (const node of embeddingResults) {
-    indexDict.addNode(node);
-  }
 
-  const index = await VectorStoreIndex.init({
-    indexStruct: indexDict,
+  const index = VectorStoreIndex.fromDocuments(documents, {
     serviceContext: serviceContext,
   });
 
-  index.vectorStore.add(embeddingResults);
-  if (!index.vectorStore.storesText) {
-    await index.docStore.addDocuments(embeddingResults, true);
-  }
-  await index.indexStore?.addIndexStruct(indexDict);
-  index.indexStruct = indexDict;
   return index;
 }
 
@@ -122,6 +110,19 @@ function createReadableStream(
   return responseStream.readable;
 }
 
+export async function GET(request: NextRequest) {
+  return NextResponse.json(ALL_MODELS);
+}
+
+export async function PUT(request: NextRequest) {
+  const body = await request.text();
+  const response = await fetch(process.env.ollamabaseurl + "/api/pull", {
+    method: "POST",
+    body: body,
+  });
+  return NextResponse.json(response);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -157,14 +158,15 @@ export async function POST(request: NextRequest) {
 
     const llm = new Ollama({
       model: config.model,
-      requestTimeout: 9600.0,
-      baseURL: "http://localhost:11434",
+      requestTimeout: 19200.0,
+      baseURL: process.env.ollamabaseurl,
       temperature: config.temperature,
       topP: config.topP,
     });
 
     const embedModel = new HuggingFaceEmbedding({
-      /*modelType:"BAAI/bge-small-en-v1.5",*/
+      modelType: "BAAI/bge-small-en-v1.5",
+      quantized: false,
     });
 
     const serviceContext = serviceContextFromDefaults({
@@ -180,7 +182,7 @@ export async function POST(request: NextRequest) {
       chatEngine = await createChatEngine(serviceContext, index);
     } else {
       const vectorStore = new QdrantVectorStore({
-        url: "http://localhost:6333",
+        url: process.env.qdrantbaseurl,
         collectionName: datasource,
       });
       let exists = false;
@@ -198,6 +200,14 @@ export async function POST(request: NextRequest) {
           vectorStore,
           serviceContext,
         );
+
+        /*const queryEngine = index.asQueryEngine();
+
+        const response = await queryEngine.query({
+          query: "What did the author do in college?",
+        });
+
+        console.log(response)*/
 
         chatEngine = await createChatEngine(serviceContext, index);
       } else {

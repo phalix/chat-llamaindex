@@ -38,7 +38,7 @@ function ContextPromptItem(props: {
   remove: () => void;
   insert: () => void;
 }) {
-  const requiredUrlInput = props.prompt.role === "URL";
+  const requiredUrlInput = false;
   const currentInputValue = props.prompt.urlDetail
     ? props.prompt.urlDetail.url
     : props.prompt.content;

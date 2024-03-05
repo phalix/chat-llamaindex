@@ -1,4 +1,5 @@
 import { Checkbox } from "@/app/components/ui/checkbox";
+import { Button } from "@/app/components/ui/button";
 import { Input, InputRange } from "@/app/components/ui/input";
 import {
   Select,
@@ -15,6 +16,7 @@ import {
   ModelType,
   LLMConfig,
 } from "../../../client/platforms/llm";
+import React from "react";
 
 function limitNumber(
   x: number,
@@ -44,10 +46,31 @@ const ModalConfigValidator = {
   },
 };
 
+export async function getServerSideProps() {
+  return { props: { all_models: ALL_MODELS } };
+}
+
 export function ModelConfigList(props: {
   modelConfig: LLMConfig;
   updateConfig: (updater: (config: LLMConfig) => void) => void;
 }) {
+  const [ALL_MODELS, setAllModels] = React.useState([]);
+  React.useEffect(() => {
+    fetch("/api/llm").then((x) => {
+      x.json().then((x) => {
+        setAllModels(x);
+      });
+    });
+  }, []);
+
+  const downloadModel = async () => {
+    const body = JSON.stringify({ name: props.modelConfig.model });
+    console.log(body);
+    fetch("/api/llm", { method: "PUT", body: body }).then((x) =>
+      console.log(x),
+    );
+  };
+
   return (
     <Card>
       <CardContent className="divide-y p-5">
@@ -71,6 +94,9 @@ export function ModelConfigList(props: {
               ))}
             </SelectContent>
           </Select>
+        </ConfigItem>
+        <ConfigItem title={Locale.Settings.Model}>
+          <Button onClick={downloadModel}>Download and Provide Model</Button>
         </ConfigItem>
 
         <ConfigItem

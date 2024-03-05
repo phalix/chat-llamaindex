@@ -30,7 +30,15 @@ export interface ResponseMessage {
   content: string;
 }
 
-export const ALL_MODELS = ["gemma:2b", "gemma:7b"] as const;
+const modelArray: Array<string> = [];
+for (var envVar in process.env) {
+  if (envVar.startsWith("ollamamodel")) {
+    modelArray.push(process.env[envVar]!);
+  }
+}
+
+//export const ALL_MODELS = ["gemma:2b", "gemma:7b","mistral"] as const;
+export const ALL_MODELS = modelArray;
 
 export type ModelType = (typeof ALL_MODELS)[number];
 

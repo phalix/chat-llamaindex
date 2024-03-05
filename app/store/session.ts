@@ -81,7 +81,8 @@ function transformAssistantMessageForSending(
 ): RequestMessage {
   const { content } = message;
   // messages with role URL are assistant messages that contain a URL - the content is already retrieved by context-prompt.tsx
-  if (message.role !== "URL") return message;
+  return message;
+  // TODO: fix this: if (message.role !== "URL") return message;
   return {
     role: "assistant",
     content,

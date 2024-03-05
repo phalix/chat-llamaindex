@@ -3,6 +3,7 @@ import {
   DATASOURCES_CHUNK_OVERLAP,
   DATASOURCES_CHUNK_SIZE,
 } from "@/scripts/constants.mjs";
+
 import {
   Document,
   MetadataMode,
@@ -13,7 +14,6 @@ import {
   HuggingFaceEmbedding,
   Ollama,
   QdrantVectorStore,
-  PapaCSVReader,
 } from "llamaindex";
 
 export async function splitCSVAndEmbed(
@@ -33,13 +33,14 @@ export async function splitCSVAndEmbed(
   const nodes = nodeParser.getNodesFromDocuments(documents);
 
   const embedModel = new HuggingFaceEmbedding({
-    /*modelType:"BAAI/bge-small-en-v1.5"*/
+    modelType: "BAAI/bge-small-en-v1.5",
+    quantized: false,
   });
   embedModel.getExtractor();
   const llm = new Ollama({
     model: "gemma:2b",
     requestTimeout: 4800.0,
-    baseURL: "http://localhost:11434",
+    baseURL: process.env.ollamabaseurl,
   });
 
   const serviceContext = serviceContextFromDefaults({
@@ -48,7 +49,7 @@ export async function splitCSVAndEmbed(
   });
 
   const vectorStore = new QdrantVectorStore({
-    url: "http://localhost:6333",
+    url: process.env.qdrantbaseurl,
     collectionName: datasource,
   });
 
@@ -75,17 +76,20 @@ export async function splitAndEmbed(
       chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
     }),
   });
-  const documents = [new Document({ text: document })];
+  document = document.replace(/[^A-Za-z0-9öäü ]+/g, " ");
+  const documents = [new Document({ text: document, id_: "test123" })];
   const nodes = nodeParser.getNodesFromDocuments(documents);
-
+  console.log("step 1");
   const embedModel = new HuggingFaceEmbedding({
-    /*modelType:"BAAI/bge-small-en-v1.5"*/
+    modelType: "BAAI/bge-small-en-v1.5",
+    quantized: false,
   });
   embedModel.getExtractor();
+
   const llm = new Ollama({
     model: "gemma:2b",
     requestTimeout: 4800.0,
-    baseURL: "http://localhost:11434",
+    baseURL: process.env.ollamabaseurl,
   });
 
   const serviceContext = serviceContextFromDefaults({
@@ -94,12 +98,13 @@ export async function splitAndEmbed(
   });
 
   const vectorStore = new QdrantVectorStore({
-    url: "http://localhost:6333",
+    url: process.env.qdrantbaseurl,
     collectionName: datasource,
   });
 
   const index = await VectorStoreIndex.fromDocuments(documents, {
-    vectorStore,
+    vectorStore: vectorStore,
+    logProgress: false,
     serviceContext: serviceContext,
   });
 
