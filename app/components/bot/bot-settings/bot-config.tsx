@@ -87,6 +87,34 @@ export default function BotConfig() {
               }}
             />
           </ConfigItem>
+          <ConfigItem
+            title={Locale.Bot.Config.Topk.Title}
+            subTitle={Locale.Bot.Config.Topk.SubTitle}
+          >
+            <Input
+              type="number"
+              value={bot.topk || ""}
+              onChange={(e) => {
+                updateBot((bot) => {
+                  bot.topk = parseInt(e.currentTarget.value);
+                });
+              }}
+            />
+          </ConfigItem>
+          <ConfigItem
+            title={Locale.Bot.Config.Timeout.Title}
+            subTitle={Locale.Bot.Config.Timeout.SubTitle}
+          >
+            <Input
+              type="number"
+              value={bot.timeout || ""}
+              onChange={(e) => {
+                updateBot((bot) => {
+                  bot.timeout = parseInt(e.currentTarget.value);
+                });
+              }}
+            />
+          </ConfigItem>
         </CardContent>
       </Card>
     </>

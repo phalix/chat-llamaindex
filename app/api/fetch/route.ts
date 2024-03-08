@@ -3,7 +3,7 @@ import {
   getPDFContentFromBuffer,
 } from "@/app/api/fetch/content";
 import { NextResponse, NextRequest } from "next/server";
-//import splitAndEmbed from "./embeddings";
+
 import { splitAndEmbed, splitCSVAndEmbed } from "./embeddings";
 import { URLDetailContent } from "@/app/client/fetch/url";
 

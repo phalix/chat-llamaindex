@@ -19,6 +19,8 @@ export type Bot = {
   readOnly: boolean;
   botHello: string | null;
   datasource?: string;
+  topk?: number;
+  timeout?: number;
   share?: Share;
   createdAt?: number;
   session: ChatSession;

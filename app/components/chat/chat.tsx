@@ -80,6 +80,10 @@ export function Chat() {
     deleteMessage(msgId);
   };
 
+  const onDeleteAll = () => {
+    botStore.updateBotSession((session) => (session.messages = []), bot.id);
+  };
+
   const context: ChatMessage[] = useMemo(() => {
     return bot.hideContext ? [] : bot.context.slice();
   }, [bot.context, bot.hideContext]);
@@ -329,13 +333,23 @@ export function Chat() {
       <Separator />
       <div className="relative w-full box-border flex-col pt-2.5 p-5 space-y-2">
         <div className="flex justify-between items-center">
-          <ChatAction
-            text={Locale.Chat.InputActions.Clear}
-            icon={<Eraser className="w-4 h-4" />}
-            onClick={clearContext}
-            showTitle
-            buttonVariant="outline"
-          />
+          <div className="flex justify-left items-center gap-2">
+            <ChatAction
+              text={Locale.Chat.InputActions.Clear}
+              icon={<Eraser className="w-4 h-4" />}
+              onClick={clearContext}
+              showTitle
+              buttonVariant="outline"
+            />
+            <ChatAction
+              text={Locale.Chat.InputActions.Delete}
+              icon={<Eraser className="w-4 h-4" />}
+              onClick={onDeleteAll}
+              showTitle
+              buttonVariant="outline"
+            />
+          </div>
+
           {isRunning && (
             <ChatAction
               onClick={stop}

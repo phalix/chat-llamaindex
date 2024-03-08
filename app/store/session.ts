@@ -201,6 +201,7 @@ export async function callSession(
     message: message,
     chatHistory: sendMessages,
     config: modelConfig,
+    topk: bot.topk,
     controller,
     onUpdate(message) {
       if (message) {

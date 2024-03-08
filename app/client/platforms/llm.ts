@@ -56,6 +56,8 @@ export interface ChatOptions {
   config: LLMConfig;
   datasource?: string;
   embeddings?: Embedding[];
+  topk?: number;
+  timeout?: number;
   controller: AbortController;
   onUpdate: (message: string) => void;
   onFinish: (memoryMessage?: ResponseMessage) => void;
@@ -79,6 +81,7 @@ export class LLMApi {
       config: options.config,
       datasource: options.datasource,
       embeddings: options.embeddings,
+      topk: options.topk,
     };
 
     console.log("[Request] payload: ", requestPayload);

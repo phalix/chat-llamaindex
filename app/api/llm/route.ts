@@ -15,6 +15,8 @@ import {
   Response,
 } from "llamaindex";
 
+import { QdrantClient } from "@qdrant/js-client-rest";
+
 import { ALL_MODELS } from "../../client/platforms/llm";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -30,10 +32,11 @@ import Locale from "@/app/locales";
 async function createChatEngine(
   serviceContext: ServiceContext,
   index?: VectorStoreIndex,
+  topk = 5,
 ) {
   if (index) {
     const retriever = index!.asRetriever();
-    retriever.similarityTopK = 5;
+    retriever.similarityTopK = topk;
 
     return new ContextChatEngine({
       chatModel: serviceContext.llm,
@@ -132,12 +135,16 @@ export async function POST(request: NextRequest) {
       datasource,
       config,
       embeddings,
+      topk,
+      timeout,
     }: {
       message: MessageContent;
       chatHistory: ChatMessage[];
       datasource: string | undefined;
       config: LLMConfig;
       embeddings: Embedding[] | undefined;
+      topk: number | undefined;
+      timeout: number | undefined;
     } = body;
     if (!message || !messages || !config) {
       return NextResponse.json(
@@ -158,10 +165,14 @@ export async function POST(request: NextRequest) {
 
     const llm = new Ollama({
       model: config.model,
-      requestTimeout: 19200.0,
+      requestTimeout: timeout ? timeout : 40000,
       baseURL: process.env.ollamabaseurl,
       temperature: config.temperature,
       topP: config.topP,
+      modelMetadata: {
+        maxTokens: 4096 / 4,
+        contextWindow: 4096,
+      },
     });
 
     const embedModel = new HuggingFaceEmbedding({
@@ -179,12 +190,18 @@ export async function POST(request: NextRequest) {
     let chatEngine;
     if (embeddings) {
       const index = await createIndex(serviceContext, embeddings);
-      chatEngine = await createChatEngine(serviceContext, index);
+      chatEngine = await createChatEngine(serviceContext, index, topk);
     } else {
-      const vectorStore = new QdrantVectorStore({
+      /*manually intializing qdrant client, in order to make it possible to set the timeout*/
+      const qdrClient = new QdrantClient({
         url: process.env.qdrantbaseurl,
-        collectionName: datasource,
+        timeout: timeout ? timeout : 40000,
       });
+
+      const vectorStore = new QdrantVectorStore({
+        client: qdrClient,
+      });
+
       let exists = false;
       if (datasource) {
         exists = await vectorStore.collectionExists(datasource);
@@ -209,13 +226,14 @@ export async function POST(request: NextRequest) {
 
         console.log(response)*/
 
-        chatEngine = await createChatEngine(serviceContext, index);
+        chatEngine = await createChatEngine(serviceContext, index, topk);
       } else {
         chatEngine = await createChatEngine(serviceContext);
       }
     }
 
     //TODO: currently not implemented in any other thing than open ai!
+    //Tokens of ollama is not implemented!
     config.sendMemory = false;
 
     const chatHistory = config.sendMemory

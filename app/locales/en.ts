@@ -9,6 +9,7 @@ const en = {
     InputActions: {
       Stop: "Stop generating",
       Clear: "Clear Context",
+      Delete: "Clear Messages",
     },
     Thinking: "Thinking…",
     InputMobile: "Enter to send",
@@ -134,6 +135,14 @@ const en = {
       Datasource: {
         Title: "Datasource",
         SubTitle: "Data to be used by Bot.",
+      },
+      Topk: {
+        Title: "Topk",
+        SubTitle: "Topk",
+      },
+      Timeout: {
+        Title: "Timeout",
+        SubTitle: "Define Timeout for waiting for LLM.",
       },
       Title: "Bot Settings",
     },
