@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "format:check": "prettier --check --ignore-path .gitignore app",
-    "format": "prettier --write --ignore-path .gitignore app",
-    "generate": "node ./scripts/generate.mjs"
+    "format": "prettier --write --ignore-path .gitignore app"
   },
   "dependencies": {
     "@fortaine/fetch-event-source": "^3.0.6",

@@ -1,8 +1,4 @@
 import { Embedding } from "@/app/client/fetch/url";
-import {
-  DATASOURCES_CHUNK_OVERLAP,
-  DATASOURCES_CHUNK_SIZE,
-} from "@/scripts/constants.mjs";
 
 import {
   Document,
@@ -22,8 +18,8 @@ export async function splitCSVAndEmbed(
 ): Promise<Embedding[]> {
   const nodeParser = new SimpleNodeParser({
     textSplitter: new SentenceSplitter({
-      chunkSize: DATASOURCES_CHUNK_SIZE,
-      chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
+      chunkSize: 512,
+      chunkOverlap: 20,
     }),
   });
   const documents = document.split("\n").map((x) => {
@@ -72,8 +68,8 @@ export async function splitAndEmbed(
 ): Promise<Embedding[]> {
   const nodeParser = new SimpleNodeParser({
     textSplitter: new SentenceSplitter({
-      chunkSize: DATASOURCES_CHUNK_SIZE,
-      chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
+      chunkSize: 512,
+      chunkOverlap: 20,
     }),
   });
   document = document.replace(/[^A-Za-z0-9öäü ]+/g, " ");

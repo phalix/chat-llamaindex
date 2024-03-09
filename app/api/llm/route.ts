@@ -2,7 +2,6 @@ import {
   ChatHistory,
   ChatMessage,
   ContextChatEngine,
-  CondenseQuestionChatEngine,
   Document,
   HuggingFaceEmbedding,
   QdrantVectorStore,
@@ -23,10 +22,6 @@ import { ALL_MODELS } from "../../client/platforms/llm";
 import { NextRequest, NextResponse } from "next/server";
 import { LLMConfig, MessageContent } from "@/app/client/platforms/llm";
 
-import {
-  DATASOURCES_CHUNK_OVERLAP,
-  DATASOURCES_CHUNK_SIZE,
-} from "@/scripts/constants.mjs";
 import { Embedding } from "@/app/client/fetch/url";
 import Locale from "@/app/locales";
 
@@ -191,8 +186,8 @@ export async function POST(request: NextRequest) {
     const serviceContext = serviceContextFromDefaults({
       llm,
       embedModel: embedModel,
-      chunkSize: DATASOURCES_CHUNK_SIZE,
-      chunkOverlap: DATASOURCES_CHUNK_OVERLAP,
+      chunkSize: 20,
+      chunkOverlap: 512,
     });
 
     let chatEngine;
