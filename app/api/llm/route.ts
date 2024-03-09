@@ -2,6 +2,7 @@ import {
   ChatHistory,
   ChatMessage,
   ContextChatEngine,
+  CondenseQuestionChatEngine,
   Document,
   HuggingFaceEmbedding,
   QdrantVectorStore,
@@ -33,6 +34,7 @@ async function createChatEngine(
   serviceContext: ServiceContext,
   index?: VectorStoreIndex,
   topk = 5,
+  chatHistory?: ChatMessage[],
 ) {
   if (index) {
     const retriever = index!.asRetriever();
@@ -42,6 +44,12 @@ async function createChatEngine(
       chatModel: serviceContext.llm,
       retriever,
     });
+
+    /*return new CondenseQuestionChatEngine({
+      queryEngine: index.asQueryEngine(),
+      chatHistory: chatHistory!,
+      serviceContext: serviceContext,
+    });*/
   }
 
   return new SimpleChatEngine({
@@ -190,7 +198,12 @@ export async function POST(request: NextRequest) {
     let chatEngine;
     if (embeddings) {
       const index = await createIndex(serviceContext, embeddings);
-      chatEngine = await createChatEngine(serviceContext, index, topk);
+      chatEngine = await createChatEngine(
+        serviceContext,
+        index,
+        topk,
+        messages,
+      );
     } else {
       /*manually intializing qdrant client, in order to make it possible to set the timeout*/
       const qdrClient = new QdrantClient({
@@ -200,6 +213,7 @@ export async function POST(request: NextRequest) {
 
       const vectorStore = new QdrantVectorStore({
         client: qdrClient,
+        collectionName: datasource,
       });
 
       let exists = false;
@@ -226,7 +240,12 @@ export async function POST(request: NextRequest) {
 
         console.log(response)*/
 
-        chatEngine = await createChatEngine(serviceContext, index, topk);
+        chatEngine = await createChatEngine(
+          serviceContext,
+          index,
+          topk,
+          messages,
+        );
       } else {
         chatEngine = await createChatEngine(serviceContext);
       }

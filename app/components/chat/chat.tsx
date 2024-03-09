@@ -81,7 +81,10 @@ export function Chat() {
   };
 
   const onDeleteAll = () => {
-    botStore.updateBotSession((session) => (session.messages = []), bot.id);
+    botStore.updateBotSession((session) => {
+      session.messages = [];
+      session.clearContextIndex = undefined;
+    }, bot.id);
   };
 
   const context: ChatMessage[] = useMemo(() => {
