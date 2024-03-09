@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
     const serviceContext = serviceContextFromDefaults({
       llm,
       embedModel: embedModel,
-      chunkSize: 20,
-      chunkOverlap: 512,
+      chunkSize: 512,
+      chunkOverlap: 20,
     });
 
     let chatEngine;
