@@ -13,9 +13,10 @@ import {
   VectorStoreIndex,
   serviceContextFromDefaults,
   Response,
+  CallbackManager,
 } from "llamaindex";
 
-import { QdrantClient } from "@qdrant/js-client-rest";
+import { createServiceContext, createVectorIndex } from "./provisioner";
 
 import { ALL_MODELS } from "../../client/platforms/llm";
 
@@ -39,12 +40,6 @@ async function createChatEngine(
       chatModel: serviceContext.llm,
       retriever,
     });
-
-    /*return new CondenseQuestionChatEngine({
-      queryEngine: index.asQueryEngine(),
-      chatHistory: chatHistory!,
-      serviceContext: serviceContext,
-    });*/
   }
 
   return new SimpleChatEngine({
@@ -159,36 +154,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*const llmoai = new OpenAI({
-      model: config.model,
-      temperature: config.temperature,
-      topP: config.topP,
-      maxTokens: config.maxTokens,
-    });*/
-
-    const llm = new Ollama({
-      model: config.model,
-      requestTimeout: timeout ? timeout : 40000,
-      baseURL: process.env.ollamabaseurl,
-      temperature: config.temperature,
-      topP: config.topP,
-      modelMetadata: {
-        maxTokens: 4096 / 4,
-        contextWindow: 4096,
+    const callbackManager = new CallbackManager({
+      onLLMStream: (x) => {
+        console.log(x);
+      },
+      onRetrieve: (x) => {
+        console.log(x);
       },
     });
 
-    const embedModel = new HuggingFaceEmbedding({
-      modelType: "BAAI/bge-small-en-v1.5",
-      quantized: false,
-    });
-
-    const serviceContext = serviceContextFromDefaults({
-      llm,
-      embedModel: embedModel,
-      chunkSize: 512,
-      chunkOverlap: 20,
-    });
+    const [serviceContext, llm, embedModel] = createServiceContext(
+      config,
+      timeout ? timeout : 40000,
+      callbackManager,
+    );
 
     let chatEngine;
     if (embeddings) {
@@ -200,40 +179,13 @@ export async function POST(request: NextRequest) {
         messages,
       );
     } else {
-      /*manually intializing qdrant client, in order to make it possible to set the timeout*/
-      const qdrClient = new QdrantClient({
-        url: process.env.qdrantbaseurl,
-        timeout: timeout ? timeout : 40000,
-      });
-
-      const vectorStore = new QdrantVectorStore({
-        client: qdrClient,
-        collectionName: datasource,
-      });
-
-      let exists = false;
       if (datasource) {
-        exists = await vectorStore.collectionExists(datasource);
-      }
-      if (datasource && exists) {
-        if (!exists) {
-          await vectorStore.createCollection(
-            datasource,
-            embedModel.embedBatchSize,
-          );
-        }
-        const index = await VectorStoreIndex.fromVectorStore(
-          vectorStore,
+        const index = await createVectorIndex(
           serviceContext,
+          embedModel,
+          datasource,
+          timeout ? timeout : 40000,
         );
-
-        /*const queryEngine = index.asQueryEngine();
-
-        const response = await queryEngine.query({
-          query: "What did the author do in college?",
-        });
-
-        console.log(response)*/
 
         chatEngine = await createChatEngine(
           serviceContext,
@@ -259,6 +211,7 @@ export async function POST(request: NextRequest) {
       chatHistory,
       stream: true,
     });
+
     const readableStream = createReadableStream(stream, chatHistory);
 
     return new NextResponse(readableStream, {
